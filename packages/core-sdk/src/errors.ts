@@ -110,3 +110,63 @@ export class TransactionSubmissionError extends AncoreSdkError {
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
+
+// ---------------------------------------------------------------------------
+// AncoreClient errors
+// ---------------------------------------------------------------------------
+
+/**
+ * Base error for AncoreClient operations.
+ */
+export class AncoreClientError extends AncoreSdkError {
+  constructor(message: string, cause?: Error) {
+    super('CLIENT_ERROR', message);
+    this.name = 'AncoreClientError';
+    if (cause) {
+      this.stack = `${this.stack}\nCaused by: ${cause.stack}`;
+    }
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+/**
+ * Thrown when wallet creation or import fails.
+ */
+export class WalletCreationError extends AncoreSdkError {
+  constructor(message: string, cause?: Error) {
+    super('WALLET_CREATION_FAILED', message);
+    this.name = 'WalletCreationError';
+    if (cause) {
+      this.stack = `${this.stack}\nCaused by: ${cause.stack}`;
+    }
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+/**
+ * Thrown when session key operations fail.
+ */
+export class SessionKeyError extends AncoreSdkError {
+  constructor(message: string, cause?: Error) {
+    super('SESSION_KEY_ERROR', message);
+    this.name = 'SessionKeyError';
+    if (cause) {
+      this.stack = `${this.stack}\nCaused by: ${cause.stack}`;
+    }
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+/**
+ * Thrown when transaction execution fails.
+ */
+export class TransactionError extends AncoreSdkError {
+  constructor(message: string, cause?: Error) {
+    super('TRANSACTION_ERROR', message);
+    this.name = 'TransactionError';
+    if (cause) {
+      this.stack = `${this.stack}\nCaused by: ${cause.stack}`;
+    }
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
