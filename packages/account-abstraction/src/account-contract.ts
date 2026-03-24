@@ -4,12 +4,7 @@
  */
 
 import type { SessionKey } from '@ancore/types';
-import {
-  Account,
-  Contract,
-  TransactionBuilder,
-  xdr,
-} from '@stellar/stellar-sdk';
+import { Account, Contract, TransactionBuilder, xdr } from '@stellar/stellar-sdk';
 import { mapContractError } from './errors';
 import {
   addressToScVal,
@@ -21,6 +16,12 @@ import {
   symbolToScVal,
   u64ToScVal,
 } from './xdr-utils';
+import {
+  executeContract,
+  simulateExecute,
+  type ExecuteOptions,
+  type ExecuteResult,
+} from './execute';
 
 /** Options for read calls (getOwner, getNonce, getSessionKey) when using a server */
 export interface AccountContractReadOptions {
@@ -67,12 +68,7 @@ export class AccountContract {
    * Build invocation for execute(to, function, args, expected_nonce).
    * Caller must pass the current nonce (e.g. from getNonce()) for replay protection.
    */
-  execute(
-    to: string,
-    fn: string,
-    args: xdr.ScVal[],
-    expectedNonce: number
-  ): InvocationArgs {
+  execute(to: string, fn: string, args: xdr.ScVal[], expectedNonce: number): InvocationArgs {
     return {
       method: 'execute',
       args: [
@@ -185,6 +181,34 @@ export class AccountContract {
   }
 
   /**
+   * Execute a contract method with full transaction submission.
+   * Encodes arguments, submits transaction, and returns typed result.
+   */
+  async executeContract<T = unknown>(
+    to: string,
+    functionName: string,
+    args: unknown[],
+    expectedNonce: number,
+    options: ExecuteOptions
+  ): Promise<ExecuteResult<T>> {
+    return executeContract(this, to, functionName, args, expectedNonce, options);
+  }
+
+  /**
+   * Simulate a contract execution without submitting the transaction.
+   * Useful for testing and gas estimation.
+   */
+  async simulateExecute<T = unknown>(
+    to: string,
+    functionName: string,
+    args: unknown[],
+    expectedNonce: number,
+    options: Omit<ExecuteOptions, 'fee'>
+  ): Promise<T> {
+    return simulateExecute(this, to, functionName, args, expectedNonce, options);
+  }
+
+  /**
    * Simulate a read-only contract call and return the result ScVal.
    * Throws typed errors on contract/host errors.
    */
@@ -197,10 +221,7 @@ export class AccountContract {
     const { server, sourceAccount } = options;
 
     const accountResponse = await server.getAccount(sourceAccount);
-    const account = new Account(
-      accountResponse.id,
-      accountResponse.sequence ?? '0'
-    );
+    const account = new Account(accountResponse.id, accountResponse.sequence ?? '0');
 
     const txBuilder = new TransactionBuilder(account, {
       fee: '100',
@@ -211,7 +232,7 @@ export class AccountContract {
 
     const raw = txBuilder.build();
 
-    const sim: any = await server.simulateTransaction(raw);
+    const sim: unknown = await server.simulateTransaction(raw);
 
     if (sim && typeof sim === 'object' && ('error' in sim || 'message' in sim)) {
       const errMsg =
@@ -221,7 +242,7 @@ export class AccountContract {
       throw mapContractError(String(errMsg), sim);
     }
 
-    const result = (sim as any)?.result?.retval as xdr.ScVal | undefined;
+    const result = (sim as { result?: { retval?: xdr.ScVal } })?.result?.retval;
     if (result === undefined) {
       throw mapContractError('No return value from simulation', sim);
     }
