@@ -294,7 +294,7 @@ export class AncoreClient {
       const accountContract = new AccountContract(account.contractId);
       
       return await accountContract.getSessionKey(sessionKeyPublicKey, {
-        server: this.rpcServer,
+        server: this.rpcServer as any, // Type compatibility issue with RPC server interface
         sourceAccount: account.publicKey,
         networkPassphrase: this.networkPassphrase,
       });
@@ -332,7 +332,7 @@ export class AncoreClient {
 
       const builder = new AccountTransactionBuilder(sourceAccount, builderOptions);
       
-      return builder.execute(sessionKeyPublicKey, operations);
+      return builder.execute(sessionKeyPublicKey, operations as any); // Type will be correct when xdr.Operation[] is available
     } catch (error) {
       throw new TransactionError(
         'Failed to setup execution',
@@ -372,10 +372,10 @@ export class AncoreClient {
    * @param message - The message that was signed
    * @param signature - The signature to verify
    * @param publicKey - The public key to verify against
-   * @returns True if the signature is valid
+   * @returns Promise that resolves to true if the signature is valid
    */
-  verifySignature(message: string, signature: string, publicKey: string): boolean {
-    return verifySignature(message, signature, publicKey);
+  async verifySignature(message: string, signature: string, publicKey: string): Promise<boolean> {
+    return await verifySignature(message, signature, publicKey);
   }
 
   // ---------------------------------------------------------------------------

@@ -97,7 +97,7 @@ export class AccountTransactionBuilder {
     const {
       server,
       accountContractId,
-      networkPassphrase,
+      networkPassphrase: _networkPassphrase,
       fee = BASE_FEE,
       timeoutSeconds = 300,
     } = options;
@@ -111,13 +111,13 @@ export class AccountTransactionBuilder {
 
     this.server = server;
     this.contract = new Contract(accountContractId);
-    this.networkPassphrase = networkPassphrase;
+    this.networkPassphrase = _networkPassphrase;
     this.timeoutSeconds = timeoutSeconds;
 
     // Delegate to Stellar SDK's TransactionBuilder
     this.txBuilder = new TransactionBuilder(sourceAccount, {
       fee,
-      networkPassphrase,
+      networkPassphrase: this.networkPassphrase,
     });
   }
 
