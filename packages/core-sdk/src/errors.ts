@@ -27,6 +27,20 @@ export class AncoreSdkError extends Error {
   }
 }
 
+/**
+ * Base class for Ancore SDK errors that support cause chaining.
+ * Automatically handles cause stack concatenation and prototype setup.
+ */
+export class AncoreErrorWithCause extends AncoreSdkError {
+  constructor(code: string, message: string, cause?: Error) {
+    super(code, message);
+    if (cause) {
+      this.stack = `${this.stack}\nCaused by: ${cause.stack}`;
+    }
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Simulation errors
 // ---------------------------------------------------------------------------
@@ -64,7 +78,7 @@ export class SimulationExpiredError extends AncoreSdkError {
       'SIMULATION_EXPIRED',
       'The simulation result has expired or requires ledger entry restoration. ' +
         'Please retry the transaction. If this persists the contract storage ' +
-        'may need to be restored first.',
+        'may need to be restored first.'
     );
     this.name = 'SimulationExpiredError';
     Object.setPrototypeOf(this, new.target.prototype);
@@ -118,55 +132,39 @@ export class TransactionSubmissionError extends AncoreSdkError {
 /**
  * Base error for AncoreClient operations.
  */
-export class AncoreClientError extends AncoreSdkError {
+export class AncoreClientError extends AncoreErrorWithCause {
   constructor(message: string, cause?: Error) {
-    super('CLIENT_ERROR', message);
+    super('CLIENT_ERROR', message, cause);
     this.name = 'AncoreClientError';
-    if (cause) {
-      this.stack = `${this.stack}\nCaused by: ${cause.stack}`;
-    }
-    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
 /**
  * Thrown when wallet creation or import fails.
  */
-export class WalletCreationError extends AncoreSdkError {
+export class WalletCreationError extends AncoreErrorWithCause {
   constructor(message: string, cause?: Error) {
-    super('WALLET_CREATION_FAILED', message);
+    super('WALLET_CREATION_FAILED', message, cause);
     this.name = 'WalletCreationError';
-    if (cause) {
-      this.stack = `${this.stack}\nCaused by: ${cause.stack}`;
-    }
-    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
 /**
  * Thrown when session key operations fail.
  */
-export class SessionKeyError extends AncoreSdkError {
+export class SessionKeyError extends AncoreErrorWithCause {
   constructor(message: string, cause?: Error) {
-    super('SESSION_KEY_ERROR', message);
+    super('SESSION_KEY_ERROR', message, cause);
     this.name = 'SessionKeyError';
-    if (cause) {
-      this.stack = `${this.stack}\nCaused by: ${cause.stack}`;
-    }
-    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
 /**
  * Thrown when transaction execution fails.
  */
-export class TransactionError extends AncoreSdkError {
+export class TransactionError extends AncoreErrorWithCause {
   constructor(message: string, cause?: Error) {
-    super('TRANSACTION_ERROR', message);
+    super('TRANSACTION_ERROR', message, cause);
     this.name = 'TransactionError';
-    if (cause) {
-      this.stack = `${this.stack}\nCaused by: ${cause.stack}`;
-    }
-    Object.setPrototypeOf(this, new.target.prototype);
   }
 }

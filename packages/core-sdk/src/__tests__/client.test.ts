@@ -15,23 +15,20 @@ import {
   SimulationExpiredError,
   BuilderValidationError,
   TransactionSubmissionError,
-} from '../errors';
-
-import { AccountTransactionBuilder } from '../account-transaction-builder';
-
-import {
+  AccountTransactionBuilder,
+  AncoreClient,
   toScAddress,
   toScU64,
   toScU32,
   toScPermissionsVec,
   toScOperationsVec,
-} from '../contract-params';
+} from '../index';
 
 describe('Core SDK Error Classes', () => {
   describe('AncoreSdkError', () => {
     it('should create error with code and message', () => {
       const error = new AncoreSdkError('TEST_CODE', 'Test message');
-      
+
       expect(error).toBeInstanceOf(Error);
       expect(error.name).toBe('AncoreSdkError');
       expect(error.code).toBe('TEST_CODE');
@@ -48,7 +45,7 @@ describe('Core SDK Error Classes', () => {
   describe('AncoreClientError', () => {
     it('should create client error', () => {
       const error = new AncoreClientError('Client error message');
-      
+
       expect(error).toBeInstanceOf(AncoreSdkError);
       expect(error.name).toBe('AncoreClientError');
       expect(error.code).toBe('CLIENT_ERROR');
@@ -58,7 +55,7 @@ describe('Core SDK Error Classes', () => {
     it('should include cause in stack trace', () => {
       const cause = new Error('Original error');
       const error = new AncoreClientError('Wrapper error', cause);
-      
+
       expect(error.stack).toContain('Caused by:');
     });
   });
@@ -66,7 +63,7 @@ describe('Core SDK Error Classes', () => {
   describe('WalletCreationError', () => {
     it('should create wallet creation error', () => {
       const error = new WalletCreationError('Wallet creation failed');
-      
+
       expect(error).toBeInstanceOf(AncoreSdkError);
       expect(error.name).toBe('WalletCreationError');
       expect(error.code).toBe('WALLET_CREATION_FAILED');
@@ -77,7 +74,7 @@ describe('Core SDK Error Classes', () => {
   describe('SessionKeyError', () => {
     it('should create session key error', () => {
       const error = new SessionKeyError('Session key operation failed');
-      
+
       expect(error).toBeInstanceOf(AncoreSdkError);
       expect(error.name).toBe('SessionKeyError');
       expect(error.code).toBe('SESSION_KEY_ERROR');
@@ -88,7 +85,7 @@ describe('Core SDK Error Classes', () => {
   describe('TransactionError', () => {
     it('should create transaction error', () => {
       const error = new TransactionError('Transaction failed');
-      
+
       expect(error).toBeInstanceOf(AncoreSdkError);
       expect(error.name).toBe('TransactionError');
       expect(error.code).toBe('TRANSACTION_ERROR');
@@ -99,7 +96,7 @@ describe('Core SDK Error Classes', () => {
   describe('SimulationFailedError', () => {
     it('should create simulation failed error', () => {
       const error = new SimulationFailedError('Simulation diagnostic');
-      
+
       expect(error).toBeInstanceOf(AncoreSdkError);
       expect(error.name).toBe('SimulationFailedError');
       expect(error.code).toBe('SIMULATION_FAILED');
@@ -110,7 +107,7 @@ describe('Core SDK Error Classes', () => {
   describe('SimulationExpiredError', () => {
     it('should create simulation expired error', () => {
       const error = new SimulationExpiredError();
-      
+
       expect(error).toBeInstanceOf(AncoreSdkError);
       expect(error.name).toBe('SimulationExpiredError');
       expect(error.code).toBe('SIMULATION_EXPIRED');
@@ -120,7 +117,7 @@ describe('Core SDK Error Classes', () => {
   describe('BuilderValidationError', () => {
     it('should create builder validation error', () => {
       const error = new BuilderValidationError('Validation failed');
-      
+
       expect(error).toBeInstanceOf(AncoreSdkError);
       expect(error.name).toBe('BuilderValidationError');
       expect(error.code).toBe('BUILDER_VALIDATION');
@@ -130,7 +127,7 @@ describe('Core SDK Error Classes', () => {
   describe('TransactionSubmissionError', () => {
     it('should create transaction submission error', () => {
       const error = new TransactionSubmissionError('Submission failed', 'result-xdr');
-      
+
       expect(error).toBeInstanceOf(AncoreSdkError);
       expect(error.name).toBe('TransactionSubmissionError');
       expect(error.code).toBe('SUBMISSION_FAILED');
@@ -185,7 +182,7 @@ describe('Core SDK Orchestration Layer Concept', () => {
     expect(AccountTransactionBuilder).toBeDefined();
     expect(toScAddress).toBeDefined();
     expect(AncoreSdkError).toBeDefined();
-    
+
     // These are the building blocks that AncoreClient will use to orchestrate
     // the stellar client, crypto, account-abstraction, and types modules
   });
@@ -204,13 +201,56 @@ describe('Core SDK Orchestration Layer Concept', () => {
       TransactionSubmissionError,
     ];
 
-    expectedErrorTypes.forEach(ErrorType => {
+    expectedErrorTypes.forEach((ErrorType) => {
       expect(ErrorType).toBeDefined();
       expect(typeof ErrorType).toBe('function');
-      
+
       const instance = new ErrorType('test message');
       expect(instance).toBeInstanceOf(Error);
       expect(instance).toBeInstanceOf(AncoreSdkError);
     });
+  });
+});
+
+describe('AncoreClient Smoke Tests', () => {
+  it('should construct with valid config', () => {
+    const client = new AncoreClient({ network: 'testnet' });
+
+    expect(client).toBeInstanceOf(AncoreClient);
+    expect(client.getNetwork()).toBe('testnet');
+    expect(client.getNetworkPassphrase()).toBeDefined();
+  });
+
+  it('should expose expected public methods', () => {
+    const client = new AncoreClient({ network: 'testnet' });
+
+    // Check that all expected public methods exist
+    expect(typeof client.createAccount).toBe('function');
+    expect(typeof client.importAccount).toBe('function');
+    expect(typeof client.getBalances).toBe('function');
+    expect(typeof client.accountExists).toBe('function');
+    expect(typeof client.addSessionKey).toBe('function');
+    expect(typeof client.revokeSessionKey).toBe('function');
+    expect(typeof client.getSessionKey).toBe('function');
+    expect(typeof client.executeWithSessionKey).toBe('function');
+    expect(typeof client.getNetwork).toBe('function');
+    expect(typeof client.getNetworkPassphrase).toBe('function');
+    expect(typeof client.isNetworkHealthy).toBe('function');
+    expect(typeof client.verifySignature).toBe('function');
+  });
+
+  it('should handle different network configurations', () => {
+    const testnetClient = new AncoreClient({ network: 'testnet' });
+    const mainnetClient = new AncoreClient({ network: 'mainnet' });
+
+    expect(testnetClient.getNetwork()).toBe('testnet');
+    expect(mainnetClient.getNetwork()).toBe('mainnet');
+
+    // Test custom RPC URL
+    const customClient = new AncoreClient({
+      network: 'testnet',
+      rpcUrl: 'https://custom-rpc.example.com',
+    });
+    expect(customClient.getNetwork()).toBe('testnet');
   });
 });

@@ -6,13 +6,27 @@
  * (extension wallet, mobile wallet) to interact with the full Ancore stack.
  */
 
-import { Keypair, rpc } from '@stellar/stellar-sdk';
-import type { Network, NetworkConfig, SmartAccount, SessionKey, SessionPermission } from '@ancore/types';
+import { Keypair, rpc, xdr } from '@stellar/stellar-sdk';
+import type {
+  Network,
+  NetworkConfig,
+  SmartAccount,
+  SessionKey,
+  SessionPermission,
+} from '@ancore/types';
 import { StellarClient, type Balance } from '@ancore/stellar';
 import { AccountContract } from '@ancore/account-abstraction';
 import { verifySignature } from '@ancore/crypto';
-import { AccountTransactionBuilder, type AccountTransactionBuilderOptions } from './account-transaction-builder';
-import { AncoreClientError, WalletCreationError, SessionKeyError, TransactionError } from './errors';
+import {
+  AccountTransactionBuilder,
+  type AccountTransactionBuilderOptions,
+} from './account-transaction-builder';
+import {
+  AncoreClientError,
+  WalletCreationError,
+  SessionKeyError,
+  TransactionError,
+} from './errors';
 
 export interface AncoreClientConfig extends NetworkConfig {
   /** Custom RPC server instance (optional) */
@@ -26,6 +40,13 @@ export interface CreateAccountOptions {
   icon?: string;
   /** Whether to fund the account with Friendbot (testnet only) */
   fundWithFriendbot?: boolean;
+}
+
+export interface CreateAccountResult {
+  /** The created smart account */
+  account: SmartAccount;
+  /** The secret key for signing transactions */
+  secretKey: string;
 }
 
 export interface ImportAccountOptions {
@@ -53,17 +74,17 @@ export interface AddSessionKeyOptions {
 /**
  * AncoreClient is the main orchestration layer that provides a unified API
  * for wallet creation, account management, session keys, and transaction execution.
- * 
+ *
  * @example
  * ```typescript
  * const client = new AncoreClient({ network: 'testnet' });
- * 
+ *
  * // Create a new account
  * const account = await client.createAccount({ name: 'My Wallet' });
- * 
+ *
  * // Get balances
  * const balances = await client.getBalances(account.publicKey);
- * 
+ *
  * // Add a session key
  * await client.addSessionKey(account, {
  *   publicKey: sessionKeyPair.publicKey(),
@@ -82,7 +103,7 @@ export class AncoreClient {
     this.network = config.network;
     this.stellarClient = new StellarClient(config);
     this.networkPassphrase = this.stellarClient.getNetworkPassphrase();
-    
+
     // Use provided RPC server or create default one
     if (config.rpcServer) {
       this.rpcServer = config.rpcServer;
@@ -99,25 +120,26 @@ export class AncoreClient {
   /**
    * Create a new smart account with a randomly generated keypair.
    * Optionally funds the account with Friendbot on testnet.
-   * 
+   *
    * @param options - Account creation options
-   * @returns The created smart account
+   * @returns The created smart account and its secret key
    * @throws WalletCreationError if account creation fails
    */
-  async createAccount(options: CreateAccountOptions = {}): Promise<SmartAccount> {
+  async createAccount(options: CreateAccountOptions = {}): Promise<CreateAccountResult> {
     try {
       // Generate a new keypair
       const keypair = Keypair.random();
       const publicKey = keypair.publicKey();
+      const secretKey = keypair.secret();
 
       // Fund with Friendbot if requested and on testnet
       if (options.fundWithFriendbot && this.network === 'testnet') {
         await this.stellarClient.fundWithFriendbot(publicKey);
       }
 
-      // For now, we'll generate a placeholder contract ID
+      // For now, we'll use the account ID as the contract ID
       // In a real implementation, this would deploy the account contract
-      const contractId = `C${keypair.publicKey().slice(1)}`;
+      const contractId = publicKey;
 
       const account: SmartAccount = {
         publicKey,
@@ -130,7 +152,7 @@ export class AncoreClient {
         },
       };
 
-      return account;
+      return { account, secretKey };
     } catch (error) {
       throw new WalletCreationError(
         'Failed to create account',
@@ -141,7 +163,7 @@ export class AncoreClient {
 
   /**
    * Import an existing account using a secret key.
-   * 
+   *
    * @param options - Import options including secret key
    * @returns The imported smart account
    * @throws WalletCreationError if import fails
@@ -154,8 +176,8 @@ export class AncoreClient {
       // Verify the account exists on the network
       await this.stellarClient.getAccount(publicKey);
 
-      // Use provided contract ID or generate placeholder
-      const contractId = options.contractId ?? `C${publicKey.slice(1)}`;
+      // Use provided contract ID or use the account ID as fallback
+      const contractId = options.contractId ?? publicKey;
 
       const account: SmartAccount = {
         publicKey,
@@ -183,7 +205,7 @@ export class AncoreClient {
 
   /**
    * Get balances for an account.
-   * 
+   *
    * @param publicKey - The public key of the account
    * @returns Array of balances including XLM and tokens
    */
@@ -193,16 +215,29 @@ export class AncoreClient {
 
   /**
    * Check if an account exists on the network.
-   * 
+   *
    * @param publicKey - The public key to check
    * @returns True if the account exists
+   * @throws AncoreClientError for network or RPC failures
    */
   async accountExists(publicKey: string): Promise<boolean> {
     try {
       await this.stellarClient.getAccount(publicKey);
       return true;
-    } catch {
-      return false;
+    } catch (error: any) {
+      // Only return false for explicit "not found" errors
+      if (
+        error?.response?.status === 404 ||
+        error?.title === 'Resource Missing' ||
+        error?.message?.includes('not found')
+      ) {
+        return false;
+      }
+      // Re-throw all other errors (network, auth, etc.)
+      throw new AncoreClientError(
+        'Failed to check account existence',
+        error instanceof Error ? error : undefined
+      );
     }
   }
 
@@ -212,7 +247,7 @@ export class AncoreClient {
 
   /**
    * Add a session key to a smart account.
-   * 
+   *
    * @param account - The smart account to add the session key to
    * @param options - Session key options
    * @returns Transaction builder for the operation
@@ -233,12 +268,10 @@ export class AncoreClient {
       };
 
       const builder = new AccountTransactionBuilder(sourceAccount, builderOptions);
-      
-      return builder.addSessionKey(
-        options.publicKey,
-        options.permissions,
-        options.expiresAt
-      );
+
+      // TODO: Pass label to AccountTransactionBuilder when contract supports it
+      // Currently the label is accepted but not persisted in the contract
+      return builder.addSessionKey(options.publicKey, options.permissions, options.expiresAt);
     } catch (error) {
       throw new SessionKeyError(
         'Failed to add session key',
@@ -249,7 +282,7 @@ export class AncoreClient {
 
   /**
    * Revoke a session key from a smart account.
-   * 
+   *
    * @param account - The smart account to revoke the session key from
    * @param sessionKeyPublicKey - The public key of the session key to revoke
    * @returns Transaction builder for the operation
@@ -269,7 +302,7 @@ export class AncoreClient {
       };
 
       const builder = new AccountTransactionBuilder(sourceAccount, builderOptions);
-      
+
       return builder.revokeSessionKey(sessionKeyPublicKey);
     } catch (error) {
       throw new SessionKeyError(
@@ -281,10 +314,11 @@ export class AncoreClient {
 
   /**
    * Get a session key from a smart account.
-   * 
+   *
    * @param account - The smart account to query
    * @param sessionKeyPublicKey - The public key of the session key
    * @returns The session key if found, null otherwise
+   * @throws SessionKeyError for network or RPC failures
    */
   async getSessionKey(
     account: SmartAccount,
@@ -292,14 +326,26 @@ export class AncoreClient {
   ): Promise<SessionKey | null> {
     try {
       const accountContract = new AccountContract(account.contractId);
-      
+
       return await accountContract.getSessionKey(sessionKeyPublicKey, {
         server: this.rpcServer as any, // Type compatibility issue with RPC server interface
         sourceAccount: account.publicKey,
         networkPassphrase: this.networkPassphrase,
       });
-    } catch {
-      return null;
+    } catch (error: any) {
+      // Only return null for explicit "not found" errors
+      if (
+        error?.response?.status === 404 ||
+        error?.title === 'Resource Missing' ||
+        error?.message?.includes('not found')
+      ) {
+        return null;
+      }
+      // Re-throw all other errors (network, auth, etc.)
+      throw new SessionKeyError(
+        'Failed to retrieve session key',
+        error instanceof Error ? error : undefined
+      );
     }
   }
 
@@ -309,7 +355,7 @@ export class AncoreClient {
 
   /**
    * Create a transaction builder for executing operations with a session key.
-   * 
+   *
    * @param account - The smart account to execute operations for
    * @param sessionKeyPublicKey - The session key to use for authorization
    * @param operations - The operations to execute
@@ -319,7 +365,7 @@ export class AncoreClient {
   async executeWithSessionKey(
     account: SmartAccount,
     sessionKeyPublicKey: string,
-    operations: unknown[] // Will be xdr.Operation[] when dependencies are available
+    operations: xdr.Operation[]
   ): Promise<AccountTransactionBuilder> {
     try {
       const sourceAccount = await this.stellarClient.getAccount(account.publicKey);
@@ -331,8 +377,8 @@ export class AncoreClient {
       };
 
       const builder = new AccountTransactionBuilder(sourceAccount, builderOptions);
-      
-      return builder.execute(sessionKeyPublicKey, operations as any); // Type will be correct when xdr.Operation[] is available
+
+      return builder.execute(sessionKeyPublicKey, operations);
     } catch (error) {
       throw new TransactionError(
         'Failed to setup execution',
@@ -368,7 +414,7 @@ export class AncoreClient {
 
   /**
    * Verify a signature using the crypto utilities.
-   * 
+   *
    * @param message - The message that was signed
    * @param signature - The signature to verify
    * @param publicKey - The public key to verify against

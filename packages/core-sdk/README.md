@@ -26,7 +26,7 @@ npm install @ancore/core-sdk
 ### Basic Setup
 
 ```typescript
-import { AncoreClient } from '@ancore/core-sdk';
+import { AncoreClient, SessionPermission } from '@ancore/core-sdk';
 
 const client = new AncoreClient({ network: 'testnet' });
 ```
@@ -61,7 +61,7 @@ console.log('Balances:', balances);
 ### Session Key Management
 
 ```typescript
-import { SessionPermission } from '@ancore/types';
+import { SessionPermission } from '@ancore/core-sdk';
 
 // Add a session key
 const builder = await client.addSessionKey(account, {
@@ -82,11 +82,7 @@ const sessionKey = await client.getSessionKey(account, sessionKeyPair.publicKey(
 ### Execute Operations with Session Key
 
 ```typescript
-const builder = await client.executeWithSessionKey(
-  account,
-  sessionKeyPair.publicKey(),
-  operations
-);
+const builder = await client.executeWithSessionKey(account, sessionKeyPair.publicKey(), operations);
 
 const transaction = await builder.build();
 // ... sign and submit transaction

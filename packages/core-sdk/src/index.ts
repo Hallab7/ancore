@@ -5,11 +5,15 @@
 
 export const SDK_VERSION = '0.1.0';
 
+// Re-export types from @ancore/types for convenience
+export type { SessionPermission } from '@ancore/types';
+
 // Main client API
 export { AncoreClient } from './client';
 export type {
   AncoreClientConfig,
   CreateAccountOptions,
+  CreateAccountResult,
   ImportAccountOptions,
   AddSessionKeyOptions,
 } from './client';
