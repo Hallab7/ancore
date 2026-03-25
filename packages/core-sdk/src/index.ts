@@ -45,3 +45,12 @@ export {
   SessionKeyError,
   TransactionError,
 } from './errors';
+
+// Secure Storage
+export { SecureStorageManager } from './storage/secure-storage-manager';
+export type {
+  EncryptedPayload,
+  StorageAdapter,
+  AccountData,
+  SessionKeysData,
+} from './storage/types';

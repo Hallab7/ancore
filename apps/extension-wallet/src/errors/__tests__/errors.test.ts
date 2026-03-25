@@ -1,6 +1,6 @@
 /**
  * Error Handling System Tests
- * 
+ *
  * Unit tests for:
  * - ErrorBoundary catching errors
  * - ErrorScreen UI rendering
@@ -8,8 +8,17 @@
  * - Recovery functionality
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ErrorHandler, ErrorCategory, handleError, classifyError, getErrorUserMessage, withErrorHandling, createRetryable, getErrorHandler } from '../error-handler';
+import { describe, it, expect, beforeEach } from 'vitest';
+import {
+  ErrorHandler,
+  ErrorCategory,
+  handleError,
+  classifyError,
+  getErrorUserMessage,
+  withErrorHandling,
+  createRetryable,
+  getErrorHandler,
+} from '../error-handler';
 import { getErrorMessage, ERROR_MESSAGES } from '../error-messages';
 
 describe('ErrorHandler', () => {

@@ -205,7 +205,23 @@ describe('Core SDK Orchestration Layer Concept', () => {
       expect(ErrorType).toBeDefined();
       expect(typeof ErrorType).toBe('function');
 
-      const instance = new ErrorType('test message');
+      // Create instances with appropriate constructor parameters
+      let instance: Error;
+      if (ErrorType === SimulationFailedError) {
+        instance = new SimulationFailedError('test diagnostic message');
+      } else if (ErrorType === SimulationExpiredError) {
+        instance = new SimulationExpiredError();
+      } else if (ErrorType === AncoreSdkError) {
+        instance = new AncoreSdkError('TEST_CODE', 'test message');
+      } else if (ErrorType === BuilderValidationError) {
+        instance = new BuilderValidationError('test message');
+      } else if (ErrorType === TransactionSubmissionError) {
+        instance = new TransactionSubmissionError('test message');
+      } else {
+        // AncoreErrorWithCause subclasses (AncoreClientError, WalletCreationError, etc.)
+        instance = new (ErrorType as any)('test message');
+      }
+      
       expect(instance).toBeInstanceOf(Error);
       expect(instance).toBeInstanceOf(AncoreSdkError);
     });
