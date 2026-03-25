@@ -151,7 +151,13 @@ const transaction = await builder.build();
 const sessionKey = await client.getSessionKey(account, sessionKeyPair.publicKey());
 ```
 
-### Execute Operations with Session Key
+| Option              | Type                | Description                                          |
+| ------------------- | ------------------- | ---------------------------------------------------- |
+| `server`            | `SorobanRpc.Server` | Soroban RPC server instance                          |
+| `accountContractId` | `string`            | Contract ID (C…) of deployed Ancore account contract |
+| `networkPassphrase` | `string`            | Network passphrase (e.g. `Networks.TESTNET`)         |
+| `fee`               | `string`            | Base fee in stroops (default: `BASE_FEE`)            |
+| `timeoutSeconds`    | `number`            | Transaction timeout (default: 300)                   |
 
 ```typescript
 const builder = await client.executeWithSessionKey(account, sessionKeyPair.publicKey(), operations);
@@ -161,18 +167,6 @@ const transaction = await builder.build();
 ```
 
 ## AccountTransactionBuilder API
-
-### Constructor Options
-
-| Option              | Type                | Description                                          |
-| ------------------- | ------------------- | ---------------------------------------------------- |
-| `server`            | `SorobanRpc.Server` | Soroban RPC server instance                          |
-| `accountContractId` | `string`            | Contract ID (C…) of deployed Ancore account contract |
-| `networkPassphrase` | `string`            | Network passphrase (e.g. `Networks.TESTNET`)         |
-| `fee`               | `string`            | Base fee in stroops (default: `BASE_FEE`)            |
-| `timeoutSeconds`    | `number`            | Transaction timeout (default: 300)                   |
-
-### Methods
 
 | Method                                              | Returns                                | Description                                     |
 | --------------------------------------------------- | -------------------------------------- | ----------------------------------------------- |
