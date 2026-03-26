@@ -289,6 +289,7 @@ importers:
         specifier: ^1.4.0
         version: 1.8.0
       '@stellar/stellar-sdk':
+<<<<<<< HEAD
         specifier: ^13.3.0
         version: 13.3.0
       bip39:
@@ -301,6 +302,20 @@ importers:
       '@eslint/js':
         specifier: ^9.0.0
         version: 9.39.4
+=======
+        specifier: ^12.0.0
+        version: 12.3.0
+      bip39:
+        specifier: ^3.1.0
+        version: 3.1.0
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.0.0
+        version: 9.39.3
+      '@types/bip39':
+        specifier: ^3.0.4
+        version: 3.0.4
+>>>>>>> b08ee2c (feat(crypto): implement validateMnemonic)
       '@types/jest':
         specifier: ^29.5.0
         version: 29.5.14
@@ -2694,6 +2709,10 @@ packages:
 
   '@types/babel__traverse@7.28.0':
     resolution: {integrity: sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q==}
+
+  '@types/bip39@3.0.4':
+    resolution: {integrity: sha512-kgmgxd14vTUMqcKu/gRi7adMchm7teKnOzdkeP0oQ5QovXpbUJISU0KUtBt84DdxCws/YuNlSCIoZqgXexe6KQ==}
+    deprecated: This is a stub types definition. bip39 provides its own type definitions, so you do not need this installed.
 
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
@@ -11595,6 +11614,10 @@ snapshots:
   '@types/babel__traverse@7.28.0':
     dependencies:
       '@babel/types': 7.29.0
+
+  '@types/bip39@3.0.4':
+    dependencies:
+      bip39: 3.1.0
 
   '@types/body-parser@1.19.6':
     dependencies:
