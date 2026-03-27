@@ -40,10 +40,7 @@ export type { FormProps, FormSubmitProps, FormErrorProps } from './components/Fo
 export { AddressInput, AddressInputBase } from './components/Form/AddressInput';
 export type { AddressInputProps, AddressInputBaseProps } from './components/Form/AddressInput';
 
-export {
-  AmountInput as FormAmountInput,
-  AmountInputBase,
-} from './components/Form/AmountInput';
+export { AmountInput as FormAmountInput, AmountInputBase } from './components/Form/AmountInput';
 export type {
   AmountInputProps as FormAmountInputProps,
   AmountInputBaseProps,

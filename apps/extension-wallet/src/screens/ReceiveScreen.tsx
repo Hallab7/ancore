@@ -68,19 +68,11 @@ export function ReceiveScreen({
   }, []);
 
   return (
-    <Card
-      className={cn('mx-auto w-full max-w-md border-slate-200', className)}
-    >
+    <Card className={cn('mx-auto w-full max-w-md border-slate-200', className)}>
       {/* ── Header ─────────────────────────────────────────────────── */}
       <CardHeader className="space-y-0 pb-4">
         <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label="Go back"
-            onClick={onBack}
-          >
+          <Button type="button" variant="ghost" size="icon" aria-label="Go back" onClick={onBack}>
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           </Button>
           <CardTitle className="text-lg">Receive</CardTitle>
@@ -116,12 +108,7 @@ export function ReceiveScreen({
               {account.name}
             </p>
           )}
-          <AddressDisplay
-            address={account.publicKey}
-            copyable
-            truncate={8}
-            label="Your address"
-          />
+          <AddressDisplay address={account.publicKey} copyable truncate={8} label="Your address" />
         </div>
 
         {/* Print button */}

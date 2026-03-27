@@ -162,11 +162,7 @@ export async function decryptSecretKey(
     const salt = fromBase64(validatedPayload.salt);
     const iv = fromBase64(validatedPayload.iv);
     const ciphertext = fromBase64(validatedPayload.ciphertext);
-    const encryptionKey = await deriveEncryptionKey(
-      password,
-      salt,
-      validatedPayload.iterations
-    );
+    const encryptionKey = await deriveEncryptionKey(password, salt, validatedPayload.iterations);
 
     const plaintext = await cryptoApi.subtle.decrypt(
       {
