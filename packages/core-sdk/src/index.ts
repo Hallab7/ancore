@@ -77,3 +77,13 @@ export {
 
 // Backup Export/Import
 export { exportBackup, importBackup, type BackupPayload } from './storage/backup';
+
+// Storage Adapter (Chrome/Firefox)
+export {
+  ChromeStorageAdapter,
+  BrowserStorageAdapter,
+  LocalStorageAdapter,
+  createStorageAdapter,
+  StorageError,
+  StorageErrorCode,
+} from './storage/storage-adapter';
