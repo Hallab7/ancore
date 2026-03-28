@@ -11,6 +11,14 @@ export { AncoreClient, type AncoreClientOptions } from './ancore-client';
 // Session key helpers
 export { addSessionKey, type AddSessionKeyParams } from './add-session-key';
 
+// Payment
+export {
+  sendPayment,
+  type SendPaymentParams,
+  type SendPaymentDeps,
+  type PaymentSigner,
+} from './send-payment';
+
 // Account transaction builder (wrapper around Stellar SDK's TransactionBuilder)
 export {
   AccountTransactionBuilder,
