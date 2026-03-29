@@ -114,6 +114,8 @@ const DAY_IN_LEDGERS: u32 = 17280; // 24 hours * 60 min * 60 sec / 5 sec per led
 const INSTANCE_BUMP_AMOUNT: u32 = 30 * DAY_IN_LEDGERS; // 30 days
 const INSTANCE_BUMP_THRESHOLD: u32 = 15 * DAY_IN_LEDGERS; // 15 days
 
+pub const PERMISSION_EXECUTE: u32 = 1;
+
 
 #[contract]
 pub struct AncoreAccount;
@@ -193,6 +195,10 @@ impl AncoreAccount {
 
             if env.ledger().timestamp() >= session.expires_at {
                 return Err(ContractError::SessionKeyExpired);
+            }
+
+            if !session.permissions.contains(PERMISSION_EXECUTE) {
+                return Err(ContractError::InsufficientPermission);
             }
 
             let sig = signature.ok_or(ContractError::Unauthorized)?;
@@ -699,6 +705,167 @@ mod test {
         let (sig, payload) = sign_payload(&env, &signing_key, &callee_id, &function, &args, 0);
 
         client.execute(&CallerIdentity::SessionKey(session_pk.clone()), &callee_id, &function, &args, &0u64, &Some(session_pk), &Some(sig), &Some(payload));
+    }
+
+    #[test]
+    fn test_execute_failed_no_event() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, AncoreAccount);
+        let client = AncoreAccountClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        client.initialize(&owner);
+
+        let initial_event_count = env.events().all().len();
+
+        env.mock_all_auths();
+
+        let to = Address::generate(&env);
+        let function = soroban_sdk::symbol_short!("transfer");
+        let args = Vec::new(&env);
+
+        // Fail with InvalidNonce (#4)
+        let _ = client.try_execute(
+            &CallerIdentity::Owner,
+            &to,
+            &function,
+            &args,
+            &1u64,
+            &None,
+            &None,
+            &None,
+        );
+
+        assert_eq!(env.events().all().len(), initial_event_count);
+    }
+
+    #[test]
+    fn test_execute_failed_no_nonce_increment() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, AncoreAccount);
+        let client = AncoreAccountClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        client.initialize(&owner);
+
+        assert_eq!(client.get_nonce(), 0);
+
+        env.mock_all_auths();
+
+        let to = Address::generate(&env);
+        let function = soroban_sdk::symbol_short!("transfer");
+        let args = Vec::new(&env);
+
+        // Fail with InvalidNonce (#4)
+        let _ = client.try_execute(
+            &CallerIdentity::Owner,
+            &to,
+            &function,
+            &args,
+            &1u64,
+            &None,
+            &None,
+            &None,
+        );
+
+        assert_eq!(client.get_nonce(), 0);
+    }
+
+    #[test]
+    fn test_execute_event_nonce_is_pre_increment() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, AncoreAccount);
+        let client = AncoreAccountClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        client.initialize(&owner);
+
+        env.mock_all_auths();
+
+        let callee_id = env.register_contract(None, AncoreAccount);
+        let function = soroban_sdk::Symbol::new(&env, "get_nonce");
+        let args = Vec::new(&env);
+
+        client.execute(
+            &CallerIdentity::Owner,
+            &callee_id,
+            &function,
+            &args,
+            &0u64,
+            &None,
+            &None,
+            &None,
+        );
+
+        let events_list = env.events().all();
+        // Index 1 because index 0 is initialized
+        let (_contract, _topics, data) = events_list.get_unchecked(1).clone();
+        let data_tuple: (Address, soroban_sdk::Symbol, u64) =
+            soroban_sdk::FromVal::from_val(&env, &data);
+
+        // Nonce in event matches what was provided (0)
+        assert_eq!(data_tuple.2, 0);
+
+        // State nonce is incremented to 1
+        assert_eq!(client.get_nonce(), 1);
+    }
+
+    #[test]
+    fn test_execute_session_key_permissions() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, AncoreAccount);
+        let client = AncoreAccountClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        client.initialize(&owner);
+        env.mock_all_auths();
+
+        let mut csprng = OsRng;
+        let signing_key = SigningKey::generate(&mut csprng);
+        let session_pk = BytesN::from_array(&env, &signing_key.verifying_key().to_bytes());
+
+        let expires_at = env.ledger().timestamp() + 10000;
+        let callee_id = env.register_contract(None, AncoreAccount);
+        let function = soroban_sdk::symbol_short!("get_nonce");
+        let args = Vec::new(&env);
+
+        // 1. Failure: No permissions
+        let permissions_empty = Vec::new(&env);
+        client.add_session_key(&session_pk, &expires_at, &permissions_empty);
+
+        let (sig, payload) = sign_payload(&env, &signing_key, &callee_id, &function, &args, 0);
+
+        let result = client.try_execute(
+            &CallerIdentity::SessionKey(session_pk.clone()),
+            &callee_id,
+            &function,
+            &args,
+            &0u64,
+            &Some(session_pk.clone()),
+            &Some(sig),
+            &Some(payload),
+        );
+        assert!(result.is_err()); // InsufficientPermission (#7)
+
+        // 2. Success: With PERMISSION_EXECUTE
+        let mut permissions_ok = Vec::new(&env);
+        permissions_ok.push_back(PERMISSION_EXECUTE);
+        client.add_session_key(&session_pk, &expires_at, &permissions_ok);
+
+        let (sig2, payload2) = sign_payload(&env, &signing_key, &callee_id, &function, &args, 0);
+
+        let result2 = client.execute(
+            &CallerIdentity::SessionKey(session_pk.clone()),
+            &callee_id,
+            &function,
+            &args,
+            &0u64,
+            &Some(session_pk),
+            &Some(sig2),
+            &Some(payload2),
+        );
+        let res_u64: u64 = soroban_sdk::FromVal::from_val(&env, &result2);
+        assert_eq!(res_u64, 0);
     }
 }
 
