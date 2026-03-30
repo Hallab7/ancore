@@ -77,3 +77,23 @@ export { useToast } from './components/Toast/useToast';
 
 // Utility functions
 export { cn } from './lib/utils';
+
+export { TransactionHistory } from './components/TransactionHistory';
+export type { TransactionHistoryProps } from './components/TransactionHistory';
+
+export { TransactionItem } from './components/TransactionItem';
+export type { TransactionItemProps } from './components/TransactionItem';
+
+export {
+  formatAddress,
+  formatTime,
+  formatTransactionAmount,
+  getDateGroupLabel,
+  groupTransactionsByDate,
+} from './utils/transaction-formatter';
+export type {
+  TransactionGroup,
+  TransactionRecord,
+  TransactionStatus,
+  TransactionType,
+} from './utils/transaction-formatter';
