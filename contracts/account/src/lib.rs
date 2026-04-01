@@ -115,7 +115,7 @@ const INSTANCE_BUMP_AMOUNT: u32 = 30 * DAY_IN_LEDGERS; // 30 days
 const INSTANCE_BUMP_THRESHOLD: u32 = 15 * DAY_IN_LEDGERS; // 15 days
 
 /// Permission bit for execute operations
-const PERMISSION_EXECUTE: u32 = 1;
+// const PERMISSION_EXECUTE: u32 = 1;
 /// Permission bit for session-key execute authorization.
 /// Issue #188: Session keys must have this permission to invoke transactions.
 /// Without this bit set, execute() returns InsufficientPermission error.
