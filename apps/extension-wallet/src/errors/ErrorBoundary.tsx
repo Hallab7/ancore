@@ -6,7 +6,7 @@
  */
 
 import { ErrorBoundary as ReactErrorBoundary, useErrorBoundary } from 'react-error-boundary';
-import type { ErrorInfo, ReactNode } from 'react';
+import type { ComponentType, ErrorInfo, JSX, ReactNode } from 'react';
 import { ErrorScreen } from './ErrorScreen';
 import { ErrorCategory, handleError } from './error-handler';
 
@@ -166,9 +166,9 @@ export function useErrorHandler() {
  * ```
  */
 export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
+  Component: ComponentType<P>,
   errorBoundaryProps?: Partial<ErrorBoundaryProps>
-): React.ComponentType<P> {
+): ComponentType<P> {
   return function WrappedComponent(props: P): JSX.Element {
     return (
       <ErrorBoundary {...errorBoundaryProps}>

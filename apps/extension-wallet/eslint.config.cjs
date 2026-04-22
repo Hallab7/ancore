@@ -11,61 +11,62 @@ module.exports = [
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsparser,
-      globals: {
-        ...globals.browser,
-        ...globals.vitest,
-      },
       parserOptions: {
         ecmaVersion: 2020,
         sourceType: 'module',
         ecmaFeatures: {
           jsx: true,
         },
-      parserOptions: {
-        ecmaVersion: 2020,
-        sourceType: 'module',
-        ecmaFeatures: { jsx: true },
       },
       globals: {
         ...globals.browser,
         ...globals.node,
+        ...globals.vitest,
       },
     },
     plugins: {
       '@typescript-eslint': tseslint,
-      'react': react,
+      react,
       'react-hooks': reactHooks,
     },
     rules: {
       ...tseslint.configs.recommended.rules,
       ...react.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
-      'react/react-in-jsx-scope': 'off', // Not needed in React 18+
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
+      'no-undef': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
     settings: {
       react: {
         version: 'detect',
       },
     },
-    },
-    rules: {
-      ...tseslint.configs.recommended.rules,
-      'no-undef': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-    },
   },
   {
     files: ['**/__tests__/**/*.{ts,tsx}', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
     languageOptions: {
       globals: {
+        ...globals.browser,
+        ...globals.node,
         ...globals.jest,
+        ...globals.vitest,
         vi: 'readonly',
       },
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    files: ['src/screens/Onboarding/**/*.tsx'],
+    rules: {
+      'react/no-unescaped-entities': 'off',
     },
   },
   {

@@ -27,20 +27,6 @@ export class AncoreSdkError extends Error {
   }
 }
 
-/**
- * Base class for Ancore SDK errors that support cause chaining.
- * Automatically handles cause stack concatenation and prototype setup.
- */
-export class AncoreErrorWithCause extends AncoreSdkError {
-  constructor(code: string, message: string, cause?: Error) {
-    super(code, message);
-    if (cause) {
-      this.stack = `${this.stack}\nCaused by: ${cause.stack}`;
-    }
-    Object.setPrototypeOf(this, new.target.prototype);
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Simulation errors
 // ---------------------------------------------------------------------------
@@ -101,6 +87,21 @@ export class BuilderValidationError extends AncoreSdkError {
   }
 }
 
+/**
+ * Thrown when session-key management operations fail after delegating to the
+ * account abstraction layer.
+ */
+export class SessionKeyManagementError extends AncoreSdkError {
+  public readonly cause?: unknown;
+
+  constructor(message: string, code: string = 'SESSION_KEY_MANAGEMENT_FAILED', cause?: unknown) {
+    super(code, message);
+    this.name = 'SessionKeyManagementError';
+    this.cause = cause;
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Network / submission errors
 // ---------------------------------------------------------------------------
@@ -126,45 +127,30 @@ export class TransactionSubmissionError extends AncoreSdkError {
 }
 
 // ---------------------------------------------------------------------------
-// AncoreClient errors
+// Session-key execution errors
 // ---------------------------------------------------------------------------
 
 /**
- * Base error for AncoreClient operations.
+ * Thrown when executeWithSessionKey() is called with invalid inputs.
  */
-export class AncoreClientError extends AncoreErrorWithCause {
-  constructor(message: string, cause?: Error) {
-    super('CLIENT_ERROR', message, cause);
-    this.name = 'AncoreClientError';
+export class SessionKeyExecutionValidationError extends AncoreSdkError {
+  constructor(message: string) {
+    super('SESSION_KEY_EXECUTION_VALIDATION', message);
+    this.name = 'SessionKeyExecutionValidationError';
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
 /**
- * Thrown when wallet creation or import fails.
+ * Thrown when session-key execution fails after delegating to the execution layer.
  */
-export class WalletCreationError extends AncoreErrorWithCause {
-  constructor(message: string, cause?: Error) {
-    super('WALLET_CREATION_FAILED', message, cause);
-    this.name = 'WalletCreationError';
-  }
-}
+export class SessionKeyExecutionError extends AncoreSdkError {
+  public readonly cause?: unknown;
 
-/**
- * Thrown when session key operations fail.
- */
-export class SessionKeyError extends AncoreErrorWithCause {
-  constructor(message: string, cause?: Error) {
-    super('SESSION_KEY_ERROR', message, cause);
-    this.name = 'SessionKeyError';
-  }
-}
-
-/**
- * Thrown when transaction execution fails.
- */
-export class TransactionError extends AncoreErrorWithCause {
-  constructor(message: string, cause?: Error) {
-    super('TRANSACTION_ERROR', message, cause);
-    this.name = 'TransactionError';
+  constructor(code: string, message: string, cause?: unknown) {
+    super(code, message);
+    this.name = 'SessionKeyExecutionError';
+    this.cause = cause;
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }

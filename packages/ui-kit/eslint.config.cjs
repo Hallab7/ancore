@@ -14,12 +14,11 @@ module.exports = [
       parserOptions: {
         ecmaVersion: 2020,
         sourceType: 'module',
-        ecmaFeatures: {
-          jsx: true,
-        },
+        ecmaFeatures: { jsx: true },
       },
       globals: {
         ...globals.browser,
+        ...globals.node,
       },
     },
     plugins: {
@@ -36,8 +35,29 @@ module.exports = [
       '@typescript-eslint/no-empty-object-type': 'off',
     },
     settings: {
-      react: {
-        version: 'detect',
+      react: { version: 'detect' },
+    },
+  },
+  {
+    // Storybook story files use render functions that aren't React components
+    files: ['**/*.stories.{ts,tsx}'],
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+    },
+  },
+  {
+    files: ['**/__tests__/**/*.{ts,tsx}', '**/*.test.{ts,tsx}'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: 'module',
+        ecmaFeatures: { jsx: true },
+      },
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.jest,
       },
     },
   },
@@ -60,6 +80,7 @@ module.exports = [
         afterAll: 'readonly',
         afterEach: 'readonly',
         jest: 'readonly',
+        vi: 'readonly',
       },
     },
   },

@@ -1,8 +1,6 @@
-import * as React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
-
 
 vi.mock('qrcode.react', () => ({
   QRCodeSVG: ({ value, 'aria-label': ariaLabel }: { value: string; 'aria-label'?: string }) => (
@@ -11,7 +9,6 @@ vi.mock('qrcode.react', () => ({
 }));
 
 import { ReceiveScreen } from '@/screens/ReceiveScreen';
-
 
 const MAINNET_ACCOUNT = {
   publicKey: 'GABC1234567890DEFGHIJKLMNOPQRSTUVWXYZ',
@@ -27,9 +24,7 @@ describe('ReceiveScreen', () => {
   describe('rendering', () => {
     it('renders the screen title', () => {
       render(<ReceiveScreen account={MAINNET_ACCOUNT} />);
-      expect(
-        screen.getByRole('heading', { name: /receive/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /receive/i })).toBeInTheDocument();
     });
 
     it('renders the QR code with the correct address value', () => {
@@ -73,9 +68,7 @@ describe('ReceiveScreen', () => {
     });
 
     it('shows "Futurenet" badge when network is futurenet', () => {
-      render(
-        <ReceiveScreen account={TESTNET_ACCOUNT} network="futurenet" />
-      );
+      render(<ReceiveScreen account={TESTNET_ACCOUNT} network="futurenet" />);
       expect(screen.getByText('Futurenet')).toBeInTheDocument();
     });
   });
@@ -117,9 +110,7 @@ describe('ReceiveScreen', () => {
       await waitFor(() => {
         // After copying the button aria-label changes inside AddressDisplay
         // The icon swaps to a check – verify the button is still in the DOM
-        expect(
-          screen.getByRole('button', { name: /copy address/i })
-        ).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /copy address/i })).toBeInTheDocument();
       });
     });
   });
@@ -127,14 +118,12 @@ describe('ReceiveScreen', () => {
   describe('print', () => {
     it('renders a print button', () => {
       render(<ReceiveScreen account={MAINNET_ACCOUNT} />);
-      expect(
-        screen.getByRole('button', { name: /print qr code/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /print qr code/i })).toBeInTheDocument();
     });
 
     it('calls window.print when the print button is clicked', async () => {
       const user = userEvent.setup();
-      const printSpy = vi.spyOn(window, 'print').mockImplementation(() => { });
+      const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
 
       render(<ReceiveScreen account={MAINNET_ACCOUNT} />);
       await user.click(screen.getByRole('button', { name: /print qr code/i }));
@@ -146,13 +135,9 @@ describe('ReceiveScreen', () => {
 
   describe('QR generation', () => {
     it('encodes exactly the publicKey in the QR code', () => {
-      const publicKey =
-        'GD6SZQJNKL3ZYXPWLUVFXZNXUVXJTQPWMQHZMDMQHLS5VNLQBQNPFLM';
+      const publicKey = 'GD6SZQJNKL3ZYXPWLUVFXZNXUVXJTQPWMQHZMDMQHLS5VNLQBQNPFLM';
       render(<ReceiveScreen account={{ publicKey }} />);
-      expect(screen.getByTestId('qr-code-svg')).toHaveAttribute(
-        'data-value',
-        publicKey
-      );
+      expect(screen.getByTestId('qr-code-svg')).toHaveAttribute('data-value', publicKey);
     });
 
     it('renders a different QR value when account changes', () => {
