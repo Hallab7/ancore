@@ -25,7 +25,6 @@ function assertNoPasswordLeak(password: string, result: PasswordValidationResult
 }
 
 describe('validatePasswordStrength()', () => {
-
   describe('input edge cases', () => {
     it('rejects an empty string', () => {
       const result = validatePasswordStrength('');
@@ -108,8 +107,7 @@ describe('validatePasswordStrength()', () => {
     });
 
     it('rejects "admin" pattern password', () => {
-      const result = validatePasswordStrength('adminADMIN1234!');
-      // matchesWeakPattern — "admin" repeated
+      expectWeak(validatePasswordStrength('adminADMIN1234!'));
       const result2 = validatePasswordStrength('adminadminadmin1!');
       expectWeak(result2);
     });

@@ -40,6 +40,14 @@ export interface InvocationArgs {
   args: xdr.ScVal[];
 }
 
+interface SimulateErrorShape {
+  error?: string;
+  message?: string;
+  result?: {
+    retval?: xdr.ScVal;
+  };
+}
+
 /**
  * AccountContract wraps the Ancore account abstraction contract (contracts/account).
  * Use it to build invoke operations or to run read-only calls via a Soroban RPC server.
@@ -232,7 +240,7 @@ export class AccountContract {
 
     const raw = txBuilder.build();
 
-    const sim: unknown = await server.simulateTransaction(raw);
+    const sim = (await server.simulateTransaction(raw)) as SimulateErrorShape;
 
     if (sim && typeof sim === 'object' && ('error' in sim || 'message' in sim)) {
       const errMsg =
@@ -242,7 +250,7 @@ export class AccountContract {
       throw mapContractError(String(errMsg), sim);
     }
 
-    const result = (sim as { result?: { retval?: xdr.ScVal } })?.result?.retval;
+    const result = sim.result?.retval;
     if (result === undefined) {
       throw mapContractError('No return value from simulation', sim);
     }
